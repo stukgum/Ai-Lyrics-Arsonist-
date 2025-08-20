@@ -1,0 +1,188 @@
+{
+  "info": {
+    "name": "BeatLyrics API",
+    "description": "AI-powered beat-synced lyric generation API",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Upload Audio File",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "user_id",
+              "value": "test-user",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/upload",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "upload"]
+        }
+      }
+    },
+    {
+      "name": "Process URL",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://www.youtube.com/watch?v=example\",\n  \"confirm_rights\": true,\n  \"metadata_only\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/ingest-url",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "ingest-url"]
+        }
+      }
+    },
+    {
+      "name": "Get Job Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/jobs/{{job_id}}/status",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "jobs", "{{job_id}}", "status"]
+        }
+      }
+    },
+    {
+      "name": "Get Audio Features",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/jobs/{{job_id}}/features",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "jobs", "{{job_id}}", "features"]
+        }
+      }
+    },
+    {
+      "name": "Generate Lyrics",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"job_id\": \"{{job_id}}\",\n  \"genre\": \"hip-hop\",\n  \"mood\": \"energetic\",\n  \"explicit\": false,\n  \"rhyme_scheme\": \"AABB\",\n  \"syllables_per_beat\": 1.5\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/generate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "generate"]
+        }
+      }
+    },
+    {
+      "name": "Get Generation Results",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/generation/{{generation_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "generation", "{{generation_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Export LRC",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/export/{{generation_id}}?format=lrc",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "export", "{{generation_id}}"],
+          "query": [
+            {
+              "key": "format",
+              "value": "lrc"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit Feedback",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"generation_id\": \"{{generation_id}}\",\n  \"type\": \"rating\",\n  \"rating\": 5,\n  \"comment\": \"Great lyrics!\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/feedback",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "feedback"]
+        }
+      }
+    }
+  ]
+}

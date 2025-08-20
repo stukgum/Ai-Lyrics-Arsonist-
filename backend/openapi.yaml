@@ -1,0 +1,307 @@
+openapi: 3.0.0
+info:
+  title: BeatLyrics API
+  description: AI-powered beat-synced lyric generation API
+  version: 1.0.0
+  contact:
+    name: BeatLyrics Support
+    email: support@beatlyrics.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.beatlyrics.com
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/v1/upload:
+    post:
+      summary: Upload audio file
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                user_id:
+                  type: string
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '400':
+          description: Invalid file or file too large
+        '500':
+          description: Upload failed
+
+  /api/v1/ingest-url:
+    post:
+      summary: Process audio from URL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/URLIngestRequest'
+      responses:
+        '200':
+          description: URL processing started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+
+  /api/v1/jobs/{job_id}/status:
+    get:
+      summary: Get job status
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatusResponse'
+
+  /api/v1/jobs/{job_id}/features:
+    get:
+      summary: Get extracted audio features
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audio features
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudioFeatures'
+
+  /api/v1/generate:
+    post:
+      summary: Generate lyrics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerationRequest'
+      responses:
+        '200':
+          description: Generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerationResponse'
+
+  /api/v1/generation/{generation_id}:
+    get:
+      summary: Get generation results
+      parameters:
+        - name: generation_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Generation results
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/v1/export/{generation_id}:
+    post:
+      summary: Export generation
+      parameters:
+        - name: generation_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [lrc, srt, txt, pdf]
+      responses:
+        '200':
+          description: Exported file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+  /api/v1/feedback:
+    post:
+      summary: Submit feedback
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+      responses:
+        '200':
+          description: Feedback submitted
+
+components:
+  schemas:
+    UploadResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+        message:
+          type: string
+
+    URLIngestRequest:
+      type: object
+      properties:
+        url:
+          type: string
+        confirm_rights:
+          type: boolean
+        metadata_only:
+          type: boolean
+      required:
+        - url
+        - confirm_rights
+
+    JobStatusResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        progress:
+          type: number
+        message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AudioFeatures:
+      type: object
+      properties:
+        duration:
+          type: number
+        sample_rate:
+          type: integer
+        bpm:
+          type: number
+        tempo_confidence:
+          type: number
+        key:
+          type: string
+        beats:
+          type: array
+          items:
+            type: object
+        bars:
+          type: array
+          items:
+            type: object
+        sections:
+          type: array
+          items:
+            type: object
+
+    GenerationRequest:
+      type: object
+      properties:
+        job_id:
+          type: string
+        genre:
+          type: string
+        mood:
+          type: string
+        explicit:
+          type: boolean
+        rhyme_scheme:
+          type: string
+        syllables_per_beat:
+          type: number
+      required:
+        - job_id
+        - genre
+        - mood
+
+    GenerationResponse:
+      type: object
+      properties:
+        generation_id:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+
+    FeedbackRequest:
+      type: object
+      properties:
+        generation_id:
+          type: string
+        type:
+          type: string
+          enum: [rating, edit, report, suggestion]
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        edits:
+          type: object
+      required:
+        - generation_id
+        - type
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
