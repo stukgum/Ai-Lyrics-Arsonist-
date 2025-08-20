@@ -8,10 +8,23 @@ from passlib.context import CryptContext
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT settings
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")
+import secrets
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Security: Ensure JWT_SECRET_KEY is provided in production
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not JWT_SECRET_KEY:
+    if os.getenv("NODE_ENV") == "production":
+        raise ValueError("JWT_SECRET_KEY must be set in production environment")
+    else:
+        logger.warning("Using development JWT secret - change this in production")
+        JWT_SECRET_KEY = "dev-secret-key-change-in-production"
+
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt"""

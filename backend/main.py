@@ -1,19 +1,25 @@
+import logging
+import os
+import re
+import uuid
+from datetime import datetime
+from typing import Optional, List
+
+import uvicorn
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import uvicorn
 from pydantic import BaseModel, validator
-from typing import Optional, List
-import uuid
-import os
-from datetime import datetime
-import re
 
+from database import get_db, create_tables
 from models.audio import AudioJob, AudioFeatures, JobStatus
+from utils.storage import upload_file_to_s3
 from workers.audio_processor import process_audio_file, process_audio_url
 from workers.celery_app import celery_app
-from database import get_db, create_tables
-from utils.storage import upload_file_to_s3
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="BeatLyrics API",
@@ -47,25 +53,20 @@ class URLIngestRequest(BaseModel):
         if not v or not v.strip():
             raise ValueError('URL cannot be empty')
         
-        # Debug logging to see what URL is being validated
-        print(f"[DEBUG] Validating URL: {v.strip()}")
+        v = v.strip()
         
-        # Very basic validation - just check it starts with http/https and has a domain
-        if not (v.strip().startswith('http://') or v.strip().startswith('https://')):
-            print(f"[DEBUG] URL rejected: doesn't start with http/https")
+        # Validate URL starts with http/https
+        if not (v.startswith('http://') or v.startswith('https://')):
             raise ValueError('URL must start with http:// or https://')
         
-        # Check for basic domain structure after protocol
+        # Validate URL structure
         try:
             from urllib.parse import urlparse
-            parsed = urlparse(v.strip())
+            parsed = urlparse(v)
             if not parsed.netloc:
-                print(f"[DEBUG] URL rejected: no domain found")
                 raise ValueError('Invalid URL: no domain found')
-            print(f"[DEBUG] URL accepted: {v.strip()}")
-            return v.strip()
+            return v
         except Exception as e:
-            print(f"[DEBUG] URL parsing failed: {e}")
             raise ValueError(f'Invalid URL format: {str(e)}')
 
 class JobStatusResponse(BaseModel):

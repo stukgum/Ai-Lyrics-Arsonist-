@@ -3,8 +3,9 @@ import { type NextRequest, NextResponse } from "next/server"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-
-    const response = await fetch(`${process.env.BACKEND_URL}/api/auth/register`, {
+    
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
+    const response = await fetch(`${backendUrl}/api/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
